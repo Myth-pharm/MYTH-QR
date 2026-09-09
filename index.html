@@ -49,11 +49,6 @@ header p{
   padding:15px;
   text-align:center;
   box-shadow:0 3px 12px rgba(0,0,0,.08);
-  transition:.2s;
-}
-
-.card:hover{
-  transform:translateY(-3px);
 }
 
 .card img{
@@ -74,7 +69,8 @@ header p{
   margin-bottom:12px;
 }
 
-.card a{
+.card a,
+.back{
   display:inline-block;
   padding:10px 20px;
   background:#222;
@@ -110,13 +106,7 @@ header p{
 }
 
 .back{
-  display:inline-block;
   margin-top:20px;
-  padding:10px 20px;
-  background:#222;
-  color:white;
-  text-decoration:none;
-  border-radius:8px;
 }
 
 .loading{
@@ -150,25 +140,31 @@ header p{
 const API =
 "https://script.google.com/macros/s/AKfycbzcl0QNieJxm9lhZ3Y8uBxmP1cs1JyfanQTuPwOpm7iw2apSycenPqPYnwsu26XyRG9/exec";
 
+
+/* PRODUCT IMAGES */
+
 const images = {
+
   "hair-lotion":
-    "IMG-20240421-WA0026.jpg",
+    "https://raw.githubusercontent.com/Myth-pharm/MYTH-QR/main/IMG-20240421-WA0026.jpg",
 
   "hair-shampoo":
-    "IMG-20240421-WA0023.jpg",
+    "https://raw.githubusercontent.com/Myth-pharm/MYTH-QR/main/IMG-20240421-WA0023.jpg",
 
   "hair-cream":
-    "IMG-20250621-WA0009.jpg",
+    "https://raw.githubusercontent.com/Myth-pharm/MYTH-QR/main/IMG-20250621-WA0009.jpg",
 
   "face-wash":
-    "IMG-20240421-WA0024.jpg",
+    "https://raw.githubusercontent.com/Myth-pharm/MYTH-QR/main/IMG-20240421-WA0024.jpg",
 
   "sun-screen":
-    "file_0000000216c81f4b3c387eac448a190.png",
+    "https://raw.githubusercontent.com/Myth-pharm/MYTH-QR/main/file_0000000216c81f4b3c387eac448a190.png",
 
   "healing-cream":
-    "file_0000000056d4820abc00f0597b1d3b1d.png"
+    "https://raw.githubusercontent.com/Myth-pharm/MYTH-QR/main/file_0000000056d4820abc00f0597b1d3b1d.png"
+
 };
+
 
 const productIds = [
   "hair-lotion",
@@ -179,6 +175,7 @@ const productIds = [
   "healing-cream"
 ];
 
+
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
 
@@ -187,33 +184,41 @@ const allProducts = document.getElementById("allProducts");
 const singleProduct = document.getElementById("singleProduct");
 
 
-/* =========================
-   SINGLE PRODUCT
-========================= */
+/* SINGLE PRODUCT */
 
 function showSingleProduct(id){
 
   fetch(API + "?id=" + encodeURIComponent(id))
+
     .then(response => response.json())
+
     .then(data => {
 
       loading.style.display = "none";
       singleProduct.style.display = "block";
 
       if(data.error){
+
         singleProduct.innerHTML = `
           <div class="product-page">
             <h2>Product not found</h2>
-            <a class="back" href="./">Back to MYTH Products</a>
+            <a class="back" href="./">
+              Back to MYTH Products
+            </a>
           </div>
         `;
+
         return;
       }
 
       singleProduct.innerHTML = `
+
         <div class="product-page">
 
-          <img src="${images[id]}" alt="${data.product}">
+          <img
+            src="${images[id]}"
+            alt="${data.product}"
+          >
 
           <h2>${data.product}</h2>
 
@@ -222,9 +227,20 @@ function showSingleProduct(id){
           </div>
 
           <div class="info">
-            <b>Batch:</b> ${data.batch || ""}<br>
-            <b>Production Date:</b> ${data.productionDate || ""}<br>
-            <b>Expiry Date:</b> ${data.expiryDate || ""}
+
+            <b>Batch:</b>
+            ${data.batch || ""}
+
+            <br>
+
+            <b>Production Date:</b>
+            ${data.productionDate || ""}
+
+            <br>
+
+            <b>Expiry Date:</b>
+            ${data.expiryDate || ""}
+
           </div>
 
           <a class="back" href="./">
@@ -232,66 +248,88 @@ function showSingleProduct(id){
           </a>
 
         </div>
+
       `;
+
     })
+
     .catch(error => {
 
       loading.style.display = "none";
       singleProduct.style.display = "block";
 
       singleProduct.innerHTML = `
+
         <div class="product-page">
+
           <h2>Unable to load product</h2>
-          <a class="back" href="./">Back to MYTH Products</a>
+
+          <a class="back" href="./">
+            Back to MYTH Products
+          </a>
+
         </div>
+
       `;
 
       console.error(error);
+
     });
+
 }
 
 
-/* =========================
-   ALL PRODUCTS
-========================= */
+/* ALL PRODUCTS */
 
 async function showAllProducts(){
 
   const results = await Promise.all(
 
     productIds.map(productId =>
+
       fetch(API + "?id=" + encodeURIComponent(productId))
+
         .then(response => response.json())
+
         .then(data => ({
           id: productId,
           data: data
         }))
+
         .catch(error => ({
           id: productId,
           data: {
             error: true
           }
         }))
+
     )
 
   );
 
+
   loading.style.display = "none";
   allProducts.style.display = "grid";
+
 
   allProducts.innerHTML = results.map(item => {
 
     const data = item.data;
 
+
     if(data.error){
+
       return `
         <div class="card">
           <h2>Product unavailable</h2>
         </div>
       `;
+
     }
 
+
     return `
+
       <div class="card">
 
         <img
@@ -299,7 +337,9 @@ async function showAllProducts(){
           alt="${data.product}"
         >
 
-        <h2>${data.product}</h2>
+        <h2>
+          ${data.product}
+        </h2>
 
         <div class="price">
           ${data.price} EGP
@@ -310,15 +350,15 @@ async function showAllProducts(){
         </a>
 
       </div>
+
     `;
 
   }).join("");
+
 }
 
 
-/* =========================
-   START
-========================= */
+/* START */
 
 if(id){
 
