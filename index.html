@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MYTH QR</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#f7f7f7;
+  color:#222;
+}
+header{
+  background:white;
+  text-align:center;
+  padding:25px 15px;
+  border-bottom:1px solid #ddd;
+}
+header h1{
+  margin:0;
+  font-size:34px;
+  letter-spacing:2px;
+}
+header p{
+  color:#777;
+}
+.container{
+  max-width:700px;
+  margin:auto;
+  padding:20px;
+}
+.product{
+  background:white;
+  border-radius:18px;
+  padding:20px;
+  text-align:center;
+  box-shadow:0 3px 15px rgba(0,0,0,.08);
+}
+.product img{
+  width:100%;
+  max-width:300px;
+  height:300px;
+  object-fit:contain;
+}
+.product h2{
+  margin:15px 0;
+}
+.price{
+  font-size:24px;
+  font-weight:bold;
+  margin:15px;
+}
+.info{
+  text-align:left;
+  max-width:450px;
+  margin:auto;
+}
+.info div{
+  padding:10px 0;
+  border-bottom:1px solid #eee;
+}
+.label{
+  font-weight:bold;
+}
+#loading{
+  text-align:center;
+  padding:50px 10px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>MYTH</h1>
+  <p>Product Verification</p>
+</header>
+
+<div class="container">
+
+  <div id="loading">Loading product...</div>
+
+  <div id="product" class="product" style="display:none;">
+
+    <img id="productImage" alt="MYTH Product">
+
+    <h2 id="productName"></h2>
+
+    <div id="productPrice" class="price"></div>
+
+    <div class="info">
+
+      <div>
+        <span class="label">Batch:</span>
+        <span id="batch"></span>
+      </div>
+
+      <div>
+        <span class="label">Production Date:</span>
+        <span id="productionDate"></span>
+      </div>
+
+      <div>
+        <span class="label">Expiry Date:</span>
+        <span id="expiryDate"></span>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+
+const API_URL =
+"https://script.google.com/macros/s/AKfycbzcl0QNieJxm9lhZ3Y8uBxmP1cs1JyfanQTuPwOpm7iw2apSycenPqPYnwsu26XyRG9/exec";
+
+const images = {
+
+  "hair-lotion":
+  "IMG-20240421-WA0026.jpg",
+
+  "hair-shampoo":
+  "IMG-20240421-WA0023.jpg",
+
+  "hair-cream":
+  "IMG-20250621-WA0009.jpg",
+
+  "face-wash":
+  "IMG-20240421-WA0024.jpg",
+
+  "sun-screen":
+  "file_00000000216c81f4b3c387eac448a190.png",
+
+  "healing-cream":
+  "file_0000000056d4820abc00f0597b1d3b1d.png"
+};
+
+const id =
+new URLSearchParams(window.location.search).get("id");
+
+if (!id) {
+
+  document.getElementById("loading").textContent =
+  "No product ID found.";
+
+} else {
+
+  fetch(API_URL + "?id=" + encodeURIComponent(id))
+
+  .then(response => response.json())
+
+  .then(data => {
+
+    if(data.error){
+      throw new Error(data.error);
+    }
+
+    document.getElementById("loading").style.display =
+    "none";
+
+    document.getElementById("product").style.display =
+    "block";
+
+    document.getElementById("productName").textContent =
+    data.product || "";
+
+    document.getElementById("productPrice").textContent =
+    data.price ? data.price + " EGP" : "";
+
+    document.getElementById("batch").textContent =
+    data.batch || "";
+
+    document.getElementById("productionDate").textContent =
+    data.productionDate || "";
+
+    document.getElementById("expiryDate").textContent =
+    data.expiryDate || "";
+
+    if(images[id]){
+      document.getElementById("productImage").src =
+      images[id];
+    }
+
+  })
+
+  .catch(error => {
+
+    document.getElementById("loading").textContent =
+    "Product not found.";
+
+    console.error(error);
+
+  });
+}
+
+</script>
+
+</body>
+</html>
