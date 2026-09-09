@@ -12,61 +12,116 @@ body{
   background:#f7f7f7;
   color:#222;
 }
+
 header{
   background:white;
   text-align:center;
   padding:25px 15px;
   border-bottom:1px solid #ddd;
 }
+
 header h1{
   margin:0;
-  font-size:34px;
+  font-size:32px;
   letter-spacing:2px;
 }
+
 header p{
+  margin:8px 0 0;
   color:#777;
 }
+
 .container{
-  max-width:700px;
+  max-width:1100px;
   margin:auto;
-  padding:20px;
+  padding:25px 15px;
 }
-.product{
+
+.products{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:20px;
+}
+
+.card{
   background:white;
-  border-radius:18px;
-  padding:20px;
+  border-radius:15px;
+  padding:15px;
   text-align:center;
-  box-shadow:0 3px 15px rgba(0,0,0,.08);
+  box-shadow:0 3px 12px rgba(0,0,0,.08);
+  transition:.2s;
 }
-.product img{
+
+.card:hover{
+  transform:translateY(-3px);
+}
+
+.card img{
   width:100%;
-  max-width:300px;
-  height:300px;
+  height:230px;
+  object-fit:contain;
+  border-radius:10px;
+}
+
+.card h2{
+  font-size:20px;
+  margin:12px 0 8px;
+}
+
+.price{
+  font-size:20px;
+  font-weight:bold;
+  margin-bottom:12px;
+}
+
+.card a{
+  display:inline-block;
+  padding:10px 20px;
+  background:#222;
+  color:white;
+  text-decoration:none;
+  border-radius:8px;
+}
+
+.product-page{
+  max-width:600px;
+  margin:auto;
+  background:white;
+  border-radius:15px;
+  padding:25px;
+  text-align:center;
+  box-shadow:0 3px 12px rgba(0,0,0,.08);
+}
+
+.product-page img{
+  width:100%;
+  max-height:450px;
   object-fit:contain;
 }
-.product h2{
-  margin:15px 0;
+
+.product-page h2{
+  font-size:28px;
 }
-.price{
-  font-size:24px;
-  font-weight:bold;
-  margin:15px;
-}
+
 .info{
   text-align:left;
-  max-width:450px;
-  margin:auto;
+  margin-top:20px;
+  line-height:1.8;
 }
-.info div{
-  padding:10px 0;
-  border-bottom:1px solid #eee;
+
+.back{
+  display:inline-block;
+  margin-top:20px;
+  padding:10px 20px;
+  background:#222;
+  color:white;
+  text-decoration:none;
+  border-radius:8px;
 }
-.label{
-  font-weight:bold;
-}
-#loading{
+
+.loading{
   text-align:center;
-  padding:50px 10px;
+  padding:40px;
 }
 </style>
 </head>
@@ -80,120 +135,199 @@ header p{
 
 <div class="container">
 
-  <div id="loading">Loading product...</div>
-
-  <div id="product" class="product" style="display:none;">
-
-    <img id="productImage" alt="MYTH Product">
-
-    <h2 id="productName"></h2>
-
-    <div id="productPrice" class="price"></div>
-
-    <div class="info">
-
-      <div>
-        <span class="label">Batch:</span>
-        <span id="batch"></span>
-      </div>
-
-      <div>
-        <span class="label">Production Date:</span>
-        <span id="productionDate"></span>
-      </div>
-
-      <div>
-        <span class="label">Expiry Date:</span>
-        <span id="expiryDate"></span>
-      </div>
-
-    </div>
+  <div id="loading" class="loading">
+    Loading...
   </div>
+
+  <div id="allProducts" class="products" style="display:none;"></div>
+
+  <div id="singleProduct" style="display:none;"></div>
 
 </div>
 
 <script>
 
-const API_URL =
+const API =
 "https://script.google.com/macros/s/AKfycbzcl0QNieJxm9lhZ3Y8uBxmP1cs1JyfanQTuPwOpm7iw2apSycenPqPYnwsu26XyRG9/exec";
 
 const images = {
-
   "hair-lotion":
-  "IMG-20240421-WA0026.jpg",
+    "IMG-20240421-WA0026.jpg",
 
   "hair-shampoo":
-  "IMG-20240421-WA0023.jpg",
+    "IMG-20240421-WA0023.jpg",
 
   "hair-cream":
-  "IMG-20250621-WA0009.jpg",
+    "IMG-20250621-WA0009.jpg",
 
   "face-wash":
-  "IMG-20240421-WA0024.jpg",
+    "IMG-20240421-WA0024.jpg",
 
   "sun-screen":
-  "file_00000000216c81f4b3c387eac448a190.png",
+    "file_0000000216c81f4b3c387eac448a190.png",
 
   "healing-cream":
-  "file_0000000056d4820abc00f0597b1d3b1d.png"
+    "file_0000000056d4820abc00f0597b1d3b1d.png"
 };
 
-const id =
-new URLSearchParams(window.location.search).get("id");
+const productIds = [
+  "hair-lotion",
+  "hair-shampoo",
+  "hair-cream",
+  "face-wash",
+  "sun-screen",
+  "healing-cream"
+];
 
-if (!id) {
+const params = new URLSearchParams(window.location.search);
+const id = params.get("id");
 
-  document.getElementById("loading").textContent =
-  "No product ID found.";
+const loading = document.getElementById("loading");
+const allProducts = document.getElementById("allProducts");
+const singleProduct = document.getElementById("singleProduct");
 
-} else {
 
-  fetch(API_URL + "?id=" + encodeURIComponent(id))
+/* =========================
+   SINGLE PRODUCT
+========================= */
 
-  .then(response => response.json())
+function showSingleProduct(id){
 
-  .then(data => {
+  fetch(API + "?id=" + encodeURIComponent(id))
+    .then(response => response.json())
+    .then(data => {
+
+      loading.style.display = "none";
+      singleProduct.style.display = "block";
+
+      if(data.error){
+        singleProduct.innerHTML = `
+          <div class="product-page">
+            <h2>Product not found</h2>
+            <a class="back" href="./">Back to MYTH Products</a>
+          </div>
+        `;
+        return;
+      }
+
+      singleProduct.innerHTML = `
+        <div class="product-page">
+
+          <img src="${images[id]}" alt="${data.product}">
+
+          <h2>${data.product}</h2>
+
+          <div class="price">
+            ${data.price} EGP
+          </div>
+
+          <div class="info">
+            <b>Batch:</b> ${data.batch || ""}<br>
+            <b>Production Date:</b> ${data.productionDate || ""}<br>
+            <b>Expiry Date:</b> ${data.expiryDate || ""}
+          </div>
+
+          <a class="back" href="./">
+            View All MYTH Products
+          </a>
+
+        </div>
+      `;
+    })
+    .catch(error => {
+
+      loading.style.display = "none";
+      singleProduct.style.display = "block";
+
+      singleProduct.innerHTML = `
+        <div class="product-page">
+          <h2>Unable to load product</h2>
+          <a class="back" href="./">Back to MYTH Products</a>
+        </div>
+      `;
+
+      console.error(error);
+    });
+}
+
+
+/* =========================
+   ALL PRODUCTS
+========================= */
+
+async function showAllProducts(){
+
+  const results = await Promise.all(
+
+    productIds.map(productId =>
+      fetch(API + "?id=" + encodeURIComponent(productId))
+        .then(response => response.json())
+        .then(data => ({
+          id: productId,
+          data: data
+        }))
+        .catch(error => ({
+          id: productId,
+          data: {
+            error: true
+          }
+        }))
+    )
+
+  );
+
+  loading.style.display = "none";
+  allProducts.style.display = "grid";
+
+  allProducts.innerHTML = results.map(item => {
+
+    const data = item.data;
 
     if(data.error){
-      throw new Error(data.error);
+      return `
+        <div class="card">
+          <h2>Product unavailable</h2>
+        </div>
+      `;
     }
 
-    document.getElementById("loading").style.display =
-    "none";
+    return `
+      <div class="card">
 
-    document.getElementById("product").style.display =
-    "block";
+        <img
+          src="${images[item.id]}"
+          alt="${data.product}"
+        >
 
-    document.getElementById("productName").textContent =
-    data.product || "";
+        <h2>${data.product}</h2>
 
-    document.getElementById("productPrice").textContent =
-    data.price ? data.price + " EGP" : "";
+        <div class="price">
+          ${data.price} EGP
+        </div>
 
-    document.getElementById("batch").textContent =
-    data.batch || "";
+        <a href="?id=${item.id}">
+          View Product
+        </a>
 
-    document.getElementById("productionDate").textContent =
-    data.productionDate || "";
+      </div>
+    `;
 
-    document.getElementById("expiryDate").textContent =
-    data.expiryDate || "";
+  }).join("");
+}
 
-    if(images[id]){
-      document.getElementById("productImage").src =
-      images[id];
-    }
 
-  })
+/* =========================
+   START
+========================= */
 
-  .catch(error => {
+if(id){
 
-    document.getElementById("loading").textContent =
-    "Product not found.";
+  showSingleProduct(id);
 
-    console.error(error);
+}else{
 
-  });
+  showAllProducts();
+
 }
 
 </script>
